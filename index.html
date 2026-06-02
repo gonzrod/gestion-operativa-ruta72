@@ -87,14 +87,15 @@
             </div>
         </section>
 
-        <!-- TAB 3: CUARTO FRIO (CON CAMPOS DE JABAS Y BOLSAS) -->
+        <!-- TAB 3: CUARTO FRIO -->
         <section x-show="tab === 'frio'" x-cloak 
             x-data="{ 
                 items: [
-                    { name: 'PEPPERONI', spec: '3 X 5.67KG', bagsPerJaba: 3, weightPerBag: 5.67, jabas: '', bags: '' },
+                    { name: 'PEPPERONI (JABA DE 4)', spec: '4 X 5.67KG', bagsPerJaba: 4, weightPerBag: 5.67, jabas: '', bags: '' },
+                    { name: 'PEPPERONI (JABA DE 3)', spec: '3 X 5.67KG', bagsPerJaba: 3, weightPerBag: 5.67, jabas: '', bags: '' },
                     { name: 'PASTA TOMATE', spec: '12 X 3KG', bagsPerJaba: 12, weightPerBag: 3, jabas: '', bags: '' },
                     { name: 'QUESO PARA PIZZA', spec: '6 X 2KG', bagsPerJaba: 6, weightPerBag: 2, jabas: '', bags: '' },
-                    { name: 'QUESO EN TIRA', spec: '2 X 9KG', bagsPerJaba: 2, weightPerBag: 9, jabas: '', bags: '' }
+                    { name: 'QUESO EN TIRA', spec: '2 X 6.8KG', bagsPerJaba: 2, weightPerBag: 6.8, jabas: '', bags: '' }
                 ],
                 getTotalBags(item) {
                     let j = Number(item.jabas) || 0;
@@ -115,7 +116,7 @@
                     <template x-for="(item, index) in items" :key="index">
                         <div class="space-y-2">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase px-1" x-text="item.name + ' (' + item.spec + ')'"></label>
-                            
+
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <input type="number" x-model="item.jabas" placeholder="Jabas" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
@@ -126,7 +127,7 @@
                                     <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1">Bolsas Sueltas</span>
                                 </div>
                             </div>
-                            
+
                             <div class="flex justify-between items-center bg-blue-50 p-3 rounded-xl">
                                 <div>
                                     <p class="text-[10px] font-bold text-blue-500 uppercase">Total Bolsas</p>
@@ -137,7 +138,7 @@
                                     <p class="text-lg font-black text-blue-800" x-text="getTotalWeight(item) + ' kg'"></p>
                                 </div>
                             </div>
-                            
+
                             <div class="pt-4 border-b border-gray-100 last:border-0"></div>
                         </div>
                     </template>
