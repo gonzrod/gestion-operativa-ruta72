@@ -15,7 +15,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 pb-10" x-data="{ tab: 'frio' }">
 
-    <!-- Header -->
     <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-20 shadow-sm">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <h1 class="text-xl font-extrabold text-orange-600 tracking-tight">🍕 Ruta72Ops</h1>
@@ -23,7 +22,6 @@
         </div>
     </header>
 
-    <!-- Navigation -->
     <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[11px] font-semibold">
         <div class="max-w-md mx-auto flex">
             <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase">Masas</button>
@@ -35,7 +33,6 @@
 
     <main class="max-w-md mx-auto p-4">
 
-        <!-- TAB 1: MASAS (Calculadora de Batidas) -->
         <section x-show="tab === 'masas'" x-cloak x-data="{ amanecio: 0, hoy: 200, mañana: 200 }">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Calculadora de Batidas</h2>
@@ -60,7 +57,6 @@
             </div>
         </section>
 
-        <!-- TAB 2: PESOS (Inventario por Peso) -->
         <section x-show="tab === 'pesos'" x-cloak x-data="{ bruto: 0, tara: 0.125 }">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Inventario por Peso</h2>
@@ -87,14 +83,13 @@
             </div>
         </section>
 
-        <!-- TAB 3: CUARTO FRIO -->
         <section x-show="tab === 'frio'" x-cloak 
             x-data="{ 
                 items: [
                     { name: 'PEPPERONI', spec: '4 X 5.67KG', bagsPerJaba: 4, weightPerBag: 5.67, jabas: '', bags: '' },
                     { name: 'PASTA TOMATE', spec: '12 X 3KG', bagsPerJaba: 12, weightPerBag: 3, jabas: '', bags: '' },
                     { name: 'QUESO PARA PIZZA', spec: '6 X 2KG', bagsPerJaba: 6, weightPerBag: 2, jabas: '', bags: '' },
-                    { name: 'QUESO EN TIRA',  spec: '1 X 6.8KG',bagsPerJaba: 1, weightPerBag: 6.8}
+                    { name: 'QUESO EN TIRA',  spec: '1 X 6.8KG', bagsPerJaba: 0, weightPerBag: 6.8, jabas: '', bags: '' }
                 ],
                 getTotalBags(item) {
                     let j = Number(item.jabas) || 0;
@@ -116,8 +111,8 @@
                         <div class="space-y-2">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase px-1" x-text="item.name + ' (' + item.spec + ')'"></label>
 
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
+                            <div :class="item.bagsPerJaba > 0 ? 'grid grid-cols-2 gap-3' : 'block'">
+                                <div x-show="item.bagsPerJaba > 0">
                                     <input type="number" x-model="item.jabas" placeholder="Jabas" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
                                     <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1">Jabas Completas</span>
                                 </div>
@@ -145,17 +140,16 @@
             </div>
         </section>
 
-        <!-- TAB 4: TIEMPOS (Planificador de Batidas) -->
         <section x-show="tab === 'tiempos'" x-cloak 
             x-data="{ 
                 batidas: 1, 
                 horaInicio: '',
                 calcularFin() {
                     if (!this.horaInicio || this.batidas <= 0) return '--:--';
-                    const minutosTotales = Math.round(this.batidas * 30);
+                    const minutesTotales = Math.round(this.batidas * 30);
                     const [h, m] = this.horaInicio.split(':').map(Number);
                     const fecha = new Date();
-                    fecha.setHours(h, m + minutosTotales);
+                    fecha.setHours(h, m + minutesTotales);
                     return fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
                 },
                 formatearDuracion() {
