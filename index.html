@@ -24,10 +24,11 @@
 
     <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[11px] font-semibold">
         <div class="max-w-md mx-auto flex">
-            <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase">Masas</button>
-            <button @click="tab = 'pesos'" :class="tab === 'pesos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase">Pesos</button>
-            <button @click="tab = 'frio'" :class="tab === 'frio' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase">Frío</button>
-            <button @click="tab = 'tiempos'" :class="tab === 'tiempos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase">Tiempos</button>
+            <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Masas</button>
+            <button @click="tab = 'pesos'" :class="tab === 'pesos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Pesos</button>
+            <button @click="tab = 'frio'" :class="tab === 'frio' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Frío</button>
+            <button @click="tab = 'almacen'" :class="tab === 'almacen' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Almacén</button>
+            <button @click="tab = 'tiempos'" :class="tab === 'tiempos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Tiempos</button>
         </div>
     </nav>
 
@@ -86,10 +87,13 @@
         <section x-show="tab === 'frio'" x-cloak 
             x-data="{ 
                 items: [
-                    { name: 'PEPPERONI', spec: '4 X 5.67KG', bagsPerJaba: 4, weightPerBag: 5.67, jabas: '', bags: '' },
-                    { name: 'PASTA TOMATE', spec: '12 X 3KG', bagsPerJaba: 12, weightPerBag: 3, jabas: '', bags: '' },
-                    { name: 'QUESO PARA PIZZA', spec: '6 X 2KG', bagsPerJaba: 6, weightPerBag: 2, jabas: '', bags: '' },
-                    { name: 'QUESO EN TIRA',  spec: '1 X 6.8KG', bagsPerJaba: 0, weightPerBag: 6.8, jabas: '', bags: '' }
+                    { name: 'PEPPERONI', spec: '4 X 5.67KG', bagsPerJaba: 4, weightPerBag: 5.67, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'PASTA TOMATE', spec: '12 X 3KG', bagsPerJaba: 12, weightPerBag: 3, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'QUESO PARA PIZZA', spec: '6 X 2KG', bagsPerJaba: 6, weightPerBag: 2, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'QUESO EN TIRA',  spec: '1 X 6.8KG', bagsPerJaba: 0, weightPerBag: 6.8, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'LATAS DE PIÑA', spec: '3KG C/U', bagsPerJaba: 0, weightPerBag: 3, unitName: 'Latas', unitLabel: 'Cantidad Latas', totalLabel: 'Total Latas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'LATAS DE CHAMPIÑONES', spec: '3KG C/U', bagsPerJaba: 0, weightPerBag: 3, unitName: 'Latas', unitLabel: 'Cantidad Latas', totalLabel: 'Total Latas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'GARRAFONES', spec: '18 LITROS', bagsPerJaba: 0, weightPerBag: 18, unitName: 'Garrafones', unitLabel: 'Cantidad Garrafones', totalLabel: 'Total Unidades', weightLabel: 'Total Litros', unitSymbol: 'L', jabas: '', bags: '' }
                 ],
                 getTotalBags(item) {
                     let j = Number(item.jabas) || 0;
@@ -117,25 +121,67 @@
                                     <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1">Jabas Completas</span>
                                 </div>
                                 <div>
-                                    <input type="number" x-model="item.bags" placeholder="Bolsas" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
-                                    <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1">Bolsas Sueltas</span>
+                                    <input type="number" x-model="item.bags" :placeholder="item.unitName" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
+                                    <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1" x-text="item.unitLabel"></span>
                                 </div>
                             </div>
 
                             <div class="flex justify-between items-center bg-blue-50 p-3 rounded-xl">
                                 <div>
-                                    <p class="text-[10px] font-bold text-blue-500 uppercase">Total Bolsas</p>
+                                    <p class="text-[10px] font-bold text-blue-500 uppercase" x-text="item.totalLabel"></p>
                                     <p class="text-lg font-black text-blue-800" x-text="getTotalBags(item)"></p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-[10px] font-bold text-blue-500 uppercase">Peso Estimado</p>
-                                    <p class="text-lg font-black text-blue-800" x-text="getTotalWeight(item) + ' kg'"></p>
+                                    <p class="text-[10px] font-bold text-blue-500 uppercase" x-text="item.weightLabel"></p>
+                                    <p class="text-lg font-black text-blue-800" x-text="getTotalWeight(item) + ' ' + item.unitSymbol"></p>
                                 </div>
                             </div>
 
                             <div class="pt-4 border-b border-gray-100 last:border-0"></div>
                         </div>
                     </template>
+                </div>
+            </div>
+        </section>
+
+        <section x-show="tab === 'almacen'" x-cloak x-data="{ costalesHarina: '', empaquesLevadura: '', paquetesConos: '' }">
+            <div class="bg-white border-2 border-amber-600 rounded-xl p-4 shadow-sm space-y-6">
+                <div class="flex items-center justify-center gap-2 py-2">
+                    <svg class="w-6 h-6 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    <h2 class="text-amber-700 font-bold text-xl tracking-tight uppercase">Materia Prima Almacén</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase px-1">Harina (Costales de 25 kg)</label>
+                        <input type="number" x-model="costalesHarina" placeholder="Cantidad de costales" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
+                        <div class="flex justify-between items-center bg-amber-50 p-3 rounded-xl mt-1">
+                            <span class="text-[10px] font-bold text-amber-700 uppercase">Total Harina</span>
+                            <span class="text-lg font-black text-amber-900" x-text="((Number(costalesHarina) || 0) * 25).toFixed(2) + ' kg'"></span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-b border-gray-100"></div>
+
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase px-1">Levadura (Empaques de 450g)</label>
+                        <input type="number" x-model="empaquesLevadura" placeholder="Cantidad de empaques" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
+                        <div class="flex justify-between items-center bg-amber-50 p-3 rounded-xl mt-1">
+                            <span class="text-[10px] font-bold text-amber-700 uppercase">Total Levadura</span>
+                            <span class="text-lg font-black text-amber-900" x-text="((Number(empaquesLevadura) || 0) * 0.45).toFixed(2) + ' kg'"></span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-b border-gray-100"></div>
+
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase px-1">Conos de Nieve (Paquetes de 84 u.)</label>
+                        <input type="number" x-model="paquetesConos" placeholder="Cantidad de paquetes" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
+                        <div class="flex justify-between items-center bg-amber-50 p-3 rounded-xl mt-1">
+                            <span class="text-[10px] font-bold text-amber-700 uppercase">Total Conos</span>
+                            <span class="text-lg font-black text-amber-900" x-text="((Number(paquetesConos) || 0) * 84) + ' pzas'"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
