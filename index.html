@@ -22,12 +22,13 @@
         </div>
     </header>
 
-    <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[11px] font-semibold">
+    <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[10px] font-semibold">
         <div class="max-w-md mx-auto flex">
             <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Masas</button>
             <button @click="tab = 'pesos'" :class="tab === 'pesos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Pesos</button>
             <button @click="tab = 'frio'" :class="tab === 'frio' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Frío</button>
             <button @click="tab = 'almacen'" :class="tab === 'almacen' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Almacén</button>
+            <button @click="tab = 'merma'" :class="tab === 'merma' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Harina</button>
             <button @click="tab = 'tiempos'" :class="tab === 'tiempos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Tiempos</button>
         </div>
     </nav>
@@ -181,6 +182,71 @@
                             <span class="text-[10px] font-bold text-amber-700 uppercase">Total Conos</span>
                             <span class="text-lg font-black text-amber-900" x-text="((Number(paquetesConos) || 0) * 84) + ' pzas'"></span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section x-show="tab === 'merma'" x-cloak 
+            x-data="{ 
+                harinaAnterior: '', 
+                harinaActual: '', 
+                batidasPizza: '', 
+                batidasPan: '',
+                getHarinaTeorica() {
+                    let pizza = (Number(this.batidasPizza) || 0) * 10;
+                    let pan = (Number(this.batidasPan) || 0) * 2.5;
+                    return pizza + pan;
+                },
+                getMerma() {
+                    if(this.harinaAnterior === '' || this.harinaActual === '') return 0;
+                    let anterior = Number(this.harinaAnterior) || 0;
+                    let actual = Number(this.harinaActual) || 0;
+                    let gastadoReal = anterior - actual;
+                    let gastadoTeorico = this.getHarinaTeorica();
+                    return Math.max(0, gastadoReal - gastadoTeorico);
+                }
+            }">
+            <div class="bg-white border-2 border-red-500 rounded-xl p-4 shadow-sm space-y-5">
+                <div class="flex items-center justify-center gap-2 py-2">
+                    <svg class="w-6 h-6 text-red-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m-9 1V4a2 2 0 012-2h6l2 2h6a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                    <h2 class="text-red-700 font-bold text-xl tracking-tight uppercase">Control de Merma (Harina)</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Harina Día Anterior (kg)</label>
+                            <input type="number" step="0.01" x-model="harinaAnterior" placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Harina Día Actual (kg)</label>
+                            <input type="number" step="0.01" x-model="harinaActual" placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-b border-gray-100"></div>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Batidas Realizadas Ayer</p>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Pizza (10kg c/u)</label>
+                            <input type="number" x-model="batidasPizza" placeholder="Cantidad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Pan / Cajepops (2.5kg)</label>
+                            <input type="number" x-model="batidasPan" placeholder="Cantidad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl flex justify-between items-center text-[11px] font-semibold text-gray-600">
+                        <span>Harina Usada Esperada (Teórica):</span>
+                        <span class="font-bold text-gray-800" x-text="getHarinaTeorica().toFixed(2) + ' kg'"></span>
+                    </div>
+
+                    <div class="p-5 bg-red-600 rounded-2xl text-white shadow-lg shadow-red-200 text-center">
+                        <p class="text-red-100 text-xs font-bold uppercase tracking-wider">Merma de Harina Detectada</p>
+                        <p class="text-4xl font-black" x-text="getMerma().toFixed(2) + ' kg'"></p>
                     </div>
                 </div>
             </div>
