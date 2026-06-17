@@ -6,15 +6,81 @@
     <title>Ruta72Ops - Gestión Operativa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
         [x-cloak] { display: none !important; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 pb-10" x-data="{ tab: 'frio' }">
+<body class="bg-slate-50 text-slate-900 pb-36" 
+      x-data="{ 
+        tab: 'frio',
+        resetTodo() {
+            if(confirm('¿Seguro que quieres borrar todos los datos guardados para iniciar un nuevo turno?')) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        },
+        generarTextoReporte() {
+            let texto = '📋 *REPORTE DE OPERACIÓN - RUTA 72*\n\n';
+            
+            // Datos de Masas
+            if(localStorage.getItem('r72_masas')) {
+                const m = JSON.parse(localStorage.getItem('r72_masas'));
+                const batidas = (((Math.max(0, (Number(m.hoy)||0) - (Number(m.amanecio)||0))) + (Number(m.mañana)||0)) / 31).toFixed(1);
+                texto += `🍞 *MASAS Y BATIDAS*\n• Amaneció: ${m.amanecio || 0} bolas\n• Venta Hoy: ${m.hoy || 0}\n• Venta Mañana: ${m.mañana || 0}\n• *Batidas Sugeridas: ${batidas}*\n\n`;
+            }
+            
+            // Datos de Merma
+            if(localStorage.getItem('r72_merma')) {
+                const mer = JSON.parse(localStorage.getItem('r72_merma'));
+                const anterior = Number(mer.harinaAnterior) || 0;
+                const actual = Number(mer.harinaActual) || 0;
+                const real = Math.max(0, anterior - actual);
+                const teorica = ((Number(mer.batidasPizza) || 0) * 10) + ((Number(mer.batidasPan) || 0) * 2.5);
+                const mermaKg = Math.max(0, real - teorica);
+                const porcentaje = real === 0 ? 0 : (mermaKg / real) * 100;
+                const semaforo = porcentaje <= 3 ? '🟢 Ok' : '🔴 Excesiva';
+                
+                texto += `📉 *CONTROL DE MERMA (HARINA)*\n• Harina Usada Real: ${real.toFixed(2)} kg\n• Harina Esperada: ${teorica.toFixed(2)} kg\n• *Merma: ${mermaKg.toFixed(2)} kg (${porcentaje.toFixed(2)}%) [${semaforo}]*\n\n`;
+            }
 
+            // Datos de Frío (Resumen rápido)
+            if(localStorage.getItem('r72_frio')) {
+                const fData = JSON.parse(localStorage.getItem('r72_frio'));
+                const nombres = ['PEPPERONI', 'PASTA TOMATE', 'QUESO PIZZA', 'QUESO TIRA', 'PIÑA', 'CHAMPIÑONES', 'GARRAFONES'];
+                const specs = [4, 12, 6, 0, 0, 0, 0]; 
+                const pesos = [5.67, 3, 2, 6.8, 3, 3, 18];
+                const unidades = ['Bolsas', 'Bolsas', 'Bolsas', 'Bolsas', 'Latas', 'Latas', 'L'];
+
+                texto += `❄️ *INVENTARIO FRÍO (TOTALES)*\n`;
+                fData.forEach((item, i) => {
+                    let j = Number(item.jabas) || 0;
+                    let b = Number(item.bags) || 0;
+                    let totalU = (j * specs[i]) + b;
+                    let totalW = (totalU * pesos[i]).toFixed(1);
+                    if(totalU > 0) {
+                        texto += `• ${nombres[i]}: ${totalU} ud (${totalW} ${i===6?'L':'kg'})\n`;
+                    }
+                });
+            }
+            return texto;
+        },
+        copiarReporte() {
+            const txt = this.generarTextoReporte();
+            navigator.clipboard.writeText(txt);
+            alert('¡Reporte copiado al portapapeles listo para pegar!');
+        },
+        compartirWhatsApp() {
+            const txt = encodeURIComponent(this.generarTextoReporte());
+            window.open(`https://api.whatsapp.com/send?text=${txt}`, '_blank');
+        }
+      }">
+
+    <!-- HEADER -->
     <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-20 shadow-sm">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <h1 class="text-xl font-extrabold text-orange-600 tracking-tight">🍕 Ruta72Ops</h1>
@@ -22,49 +88,67 @@
         </div>
     </header>
 
-    <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[10px] font-semibold">
-        <div class="max-w-md mx-auto flex">
-            <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Masas</button>
-            <button @click="tab = 'pesos'" :class="tab === 'pesos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Pesos</button>
-            <button @click="tab = 'frio'" :class="tab === 'frio' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Frío</button>
-            <button @click="tab = 'almacen'" :class="tab === 'almacen' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Almacén</button>
-            <button @click="tab = 'merma'" :class="tab === 'merma' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Harina</button>
-            <button @click="tab = 'tiempos'" :class="tab === 'tiempos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50' : 'text-slate-500'" class="flex-1 py-4 transition-all uppercase text-center">Tiempos</button>
+    <!-- NAVEGACIÓN MEJORADA VISUALMENTE -->
+    <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[11px] font-bold overflow-x-auto no-scrollbar shadow-sm">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Masas</button>
+            <button @click="tab = 'pesos'" :class="tab === 'pesos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Pesos</button>
+            <button @click="tab = 'frio'" :class="tab === 'frio' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Frío</button>
+            <button @click="tab = 'almacen'" :class="tab === 'almacen' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Almacén</button>
+            <button @click="tab = 'merma'" :class="tab === 'merma' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Harina</button>
+            <button @click="tab = 'tiempos'" :class="tab === 'tiempos' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Tiempos</button>
         </div>
     </nav>
 
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="max-w-md mx-auto p-4">
 
-        <section x-show="tab === 'masas'" x-cloak x-data="{ amanecio: 0, hoy: 200, mañana: 200 }">
+        <!-- TAB: MASAS -->
+        <section x-show="tab === 'masas'" x-cloak 
+            x-data="{ 
+                form: { amanecio: '', hoy: '', mañana: '' },
+                init() {
+                    if (localStorage.getItem('r72_masas')) this.form = JSON.parse(localStorage.getItem('r72_masas'));
+                    this.$watch('form', value => localStorage.setItem('r72_masas', JSON.stringify(value)));
+                }
+            }">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Calculadora de Batidas</h2>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bolas al amanecer</label>
-                    <input type="number" x-model.number="amanecio" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
+                    <input type="number" min="0" x-model="form.amanecio" placeholder="0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Venta Hoy</label>
-                        <input type="number" x-model.number="hoy" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
+                        <input type="number" min="0" x-model="form.hoy" placeholder="0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Venta Mañana</label>
-                        <input type="number" x-model.number="mañana" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
+                        <input type="number" min="0" x-model="form.mañana" placeholder="0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
                     </div>
                 </div>
                 <div class="mt-6 p-5 bg-orange-600 rounded-2xl text-white shadow-lg shadow-orange-200 text-center">
                     <p class="text-orange-100 text-xs font-bold uppercase">Batidas Necesarias</p>
-                    <p class="text-4xl font-black" x-text="(((Math.max(0, hoy - amanecio)) + mañana) / 31).toFixed(1)"></p>
+                    <p class="text-4xl font-black" x-text="(((Math.max(0, (Number(form.hoy)||0) - (Number(form.amanecio)||0))) + (Number(form.mañana)||0)) / 31).toFixed(1)"></p>
                 </div>
             </div>
         </section>
 
-        <section x-show="tab === 'pesos'" x-cloak x-data="{ bruto: 0, tara: 0.125 }">
+        <!-- TAB: PESOS -->
+        <section x-show="tab === 'pesos'" x-cloak 
+            x-data="{ 
+                form: { bruto: '', tara: 0.125 },
+                init() {
+                    if (localStorage.getItem('r72_pesos')) this.form = JSON.parse(localStorage.getItem('r72_pesos'));
+                    this.$watch('form', value => localStorage.setItem('r72_pesos', JSON.stringify(value)));
+                }
+            }">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Inventario por Peso</h2>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Recipiente</label>
-                    <select x-model.number="tara" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <select x-model.number="form.tara" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                         <option value="0.125">Bote especias (125g)</option>
                         <option value="1.02">Bote salsa (1.02kg)</option>
                         <option value="1.27">Bote harina (1.27kg)</option>
@@ -76,15 +160,16 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Peso en Báscula (kg)</label>
-                    <input type="number" step="0.001" x-model.number="bruto" placeholder="0.000" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" min="0" step="0.001" x-model="form.bruto" placeholder="0.000" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="mt-6 p-5 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-200 text-center">
                     <p class="text-blue-100 text-xs font-bold uppercase">Peso Neto del Insumo</p>
-                    <p class="text-4xl font-black" x-text="Math.max(0, bruto - tara).toFixed(3) + ' kg'"></p>
+                    <p class="text-4xl font-black" x-text="Math.max(0, (Number(form.bruto)||0) - form.tara).toFixed(3) + ' kg'"></p>
                 </div>
             </div>
         </section>
 
+        <!-- TAB: FRÍO -->
         <section x-show="tab === 'frio'" x-cloak 
             x-data="{ 
                 items: [
@@ -96,6 +181,16 @@
                     { name: 'LATAS DE CHAMPIÑONES', spec: '3KG C/U', bagsPerJaba: 0, weightPerBag: 3, unitName: 'Latas', unitLabel: 'Cantidad Latas', totalLabel: 'Total Latas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
                     { name: 'GARRAFONES', spec: '18 LITROS', bagsPerJaba: 0, weightPerBag: 18, unitName: 'Garrafones', unitLabel: 'Cantidad Garrafones', totalLabel: 'Total Unidades', weightLabel: 'Total Litros', unitSymbol: 'L', jabas: '', bags: '' }
                 ],
+                init() {
+                    if (localStorage.getItem('r72_frio')) {
+                        const saved = JSON.parse(localStorage.getItem('r72_frio'));
+                        this.items = this.items.map((item, i) => ({ ...item, jabas: saved[i]?.jabas || '', bags: saved[i]?.bags || '' }));
+                    }
+                    this.$watch('items', value => {
+                        const toSave = value.map(item => ({ jabas: item.jabas, bags: item.bags }));
+                        localStorage.setItem('r72_frio', JSON.stringify(toSave));
+                    }, { deep: true });
+                },
                 getTotalBags(item) {
                     let j = Number(item.jabas) || 0;
                     let b = Number(item.bags) || 0;
@@ -118,11 +213,11 @@
 
                             <div :class="item.bagsPerJaba > 0 ? 'grid grid-cols-2 gap-3' : 'block'">
                                 <div x-show="item.bagsPerJaba > 0">
-                                    <input type="number" x-model="item.jabas" placeholder="Jabas" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
+                                    <input type="number" min="0" x-model="item.jabas" placeholder="Jabas" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
                                     <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1">Jabas Completas</span>
                                 </div>
                                 <div>
-                                    <input type="number" x-model="item.bags" :placeholder="item.unitName" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
+                                    <input type="number" min="0" x-model="item.bags" :placeholder="item.unitName" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-300">
                                     <span class="text-[9px] text-gray-400 font-bold uppercase mt-1 block px-1" x-text="item.unitLabel"></span>
                                 </div>
                             </div>
@@ -145,7 +240,15 @@
             </div>
         </section>
 
-        <section x-show="tab === 'almacen'" x-cloak x-data="{ costalesHarina: '', empaquesLevadura: '', paquetesConos: '' }">
+        <!-- TAB: ALMACÉN -->
+        <section x-show="tab === 'almacen'" x-cloak 
+            x-data="{ 
+                form: { costalesHarina: '', empaquesLevadura: '', paquetesConos: '' },
+                init() {
+                    if (localStorage.getItem('r72_almacen')) this.form = JSON.parse(localStorage.getItem('r72_almacen'));
+                    this.$watch('form', value => localStorage.setItem('r72_almacen', JSON.stringify(value)));
+                }
+            }">
             <div class="bg-white border-2 border-amber-600 rounded-xl p-4 shadow-sm space-y-6">
                 <div class="flex items-center justify-center gap-2 py-2">
                     <svg class="w-6 h-6 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
@@ -155,10 +258,10 @@
                 <div class="space-y-4">
                     <div class="space-y-1">
                         <label class="block text-[11px] font-bold text-gray-500 uppercase px-1">Harina (Costales de 25 kg)</label>
-                        <input type="number" x-model="costalesHarina" placeholder="Cantidad de costales" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
+                        <input type="number" min="0" x-model="form.costalesHarina" placeholder="Cantidad de costales" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
                         <div class="flex justify-between items-center bg-amber-50 p-3 rounded-xl mt-1">
                             <span class="text-[10px] font-bold text-amber-700 uppercase">Total Harina</span>
-                            <span class="text-lg font-black text-amber-900" x-text="((Number(costalesHarina) || 0) * 25).toFixed(2) + ' kg'"></span>
+                            <span class="text-lg font-black text-amber-900" x-text="((Number(form.costalesHarina) || 0) * 25).toFixed(2) + ' kg'"></span>
                         </div>
                     </div>
 
@@ -166,10 +269,10 @@
 
                     <div class="space-y-1">
                         <label class="block text-[11px] font-bold text-gray-500 uppercase px-1">Levadura (Empaques de 450g)</label>
-                        <input type="number" x-model="empaquesLevadura" placeholder="Cantidad de empaques" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
+                        <input type="number" min="0" x-model="form.empaquesLevadura" placeholder="Cantidad de empaques" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
                         <div class="flex justify-between items-center bg-amber-50 p-3 rounded-xl mt-1">
                             <span class="text-[10px] font-bold text-amber-700 uppercase">Total Levadura</span>
-                            <span class="text-lg font-black text-amber-900" x-text="((Number(empaquesLevadura) || 0) * 0.45).toFixed(2) + ' kg'"></span>
+                            <span class="text-lg font-black text-amber-900" x-text="((Number(form.empaquesLevadura) || 0) * 0.45).toFixed(2) + ' kg'"></span>
                         </div>
                     </div>
 
@@ -177,34 +280,44 @@
 
                     <div class="space-y-1">
                         <label class="block text-[11px] font-bold text-gray-500 uppercase px-1">Conos de Nieve (Paquetes de 84 u.)</label>
-                        <input type="number" x-model="paquetesConos" placeholder="Cantidad de paquetes" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
+                        <input type="number" min="0" x-model="form.paquetesConos" placeholder="Cantidad de paquetes" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg text-gray-700 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all placeholder:text-gray-300">
                         <div class="flex justify-between items-center bg-amber-50 p-3 rounded-xl mt-1">
                             <span class="text-[10px] font-bold text-amber-700 uppercase">Total Conos</span>
-                            <span class="text-lg font-black text-amber-900" x-text="((Number(paquetesConos) || 0) * 84) + ' pzas'"></span>
+                            <span class="text-lg font-black text-amber-900" x-text="((Number(form.paquetesConos) || 0) * 84) + ' pzas'"></span>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- TAB: MERMA -->
         <section x-show="tab === 'merma'" x-cloak 
             x-data="{ 
-                harinaAnterior: '', 
-                harinaActual: '', 
-                batidasPizza: '', 
-                batidasPan: '',
+                form: { harinaAnterior: '', harinaActual: '', batidasPizza: '', batidasPan: '' },
+                init() {
+                    if (localStorage.getItem('r72_merma')) this.form = JSON.parse(localStorage.getItem('r72_merma'));
+                    this.$watch('form', value => localStorage.setItem('r72_merma', JSON.stringify(value)));
+                },
                 getHarinaTeorica() {
-                    let pizza = (Number(this.batidasPizza) || 0) * 10;
-                    let pan = (Number(this.batidasPan) || 0) * 2.5;
+                    let pizza = (Number(this.form.batidasPizza) || 0) * 10;
+                    let pan = (Number(this.form.batidasPan) || 0) * 2.5;
                     return pizza + pan;
                 },
+                getHarinaRealUsada() {
+                    if(this.form.harinaAnterior === '' || this.form.harinaActual === '') return 0;
+                    let anterior = Number(this.form.harinaAnterior) || 0;
+                    let actual = Number(this.form.harinaActual) || 0;
+                    return Math.max(0, anterior - actual);
+                },
                 getMerma() {
-                    if(this.harinaAnterior === '' || this.harinaActual === '') return 0;
-                    let anterior = Number(this.harinaAnterior) || 0;
-                    let actual = Number(this.harinaActual) || 0;
-                    let gastadoReal = anterior - actual;
+                    let gastadoReal = this.getHarinaRealUsada();
                     let gastadoTeorico = this.getHarinaTeorica();
                     return Math.max(0, gastadoReal - gastadoTeorico);
+                },
+                getPorcentajeMerma() {
+                    let real = this.getHarinaRealUsada();
+                    if (real === 0) return 0;
+                    return (this.getMerma() / real) * 100;
                 }
             }">
             <div class="bg-white border-2 border-red-500 rounded-xl p-4 shadow-sm space-y-5">
@@ -217,11 +330,11 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Harina Día Anterior (kg)</label>
-                            <input type="number" step="0.01" x-model="harinaAnterior" placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                            <input type="number" min="0" step="0.01" x-model="form.harinaAnterior" placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Harina Día Actual (kg)</label>
-                            <input type="number" step="0.01" x-model="harinaActual" placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                            <input type="number" min="0" step="0.01" x-model="form.harinaActual" placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
                         </div>
                     </div>
 
@@ -231,41 +344,68 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Pizza (10kg c/u)</label>
-                            <input type="number" x-model="batidasPizza" placeholder="Cantidad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                            <input type="number" min="0" x-model="form.batidasPizza" placeholder="Cantidad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase px-1 mb-1">Pan / Cajepops (2.5kg)</label>
-                            <input type="number" x-model="batidasPan" placeholder="Cantidad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
+                            <input type="number" min="0" x-model="form.batidasPan" placeholder="Cantidad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-base text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all">
                         </div>
                     </div>
 
                     <div class="bg-slate-50 p-3 rounded-xl flex justify-between items-center text-[11px] font-semibold text-gray-600">
-                        <span>Harina Usada Esperada (Teórica):</span>
+                        <span>Harina Usada Esperada:</span>
                         <span class="font-bold text-gray-800" x-text="getHarinaTeorica().toFixed(2) + ' kg'"></span>
                     </div>
 
-                    <div class="p-5 bg-red-600 rounded-2xl text-white shadow-lg shadow-red-200 text-center">
-                        <p class="text-red-100 text-xs font-bold uppercase tracking-wider">Merma de Harina Detectada</p>
-                        <p class="text-4xl font-black" x-text="getMerma().toFixed(2) + ' kg'"></p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-4 bg-red-600 rounded-2xl text-white shadow-md text-center">
+                            <p class="text-red-100 text-[10px] font-bold uppercase tracking-wider">Merma Detectada</p>
+                            <p class="text-2xl font-black mt-1" x-text="getMerma().toFixed(2) + ' kg'"></p>
+                        </div>
+                        <div class="p-4 bg-slate-900 rounded-2xl text-white shadow-md text-center">
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">% de Merma Total</p>
+                            <p class="text-2xl font-black mt-1" x-text="getPorcentajeMerma().toFixed(2) + '%'"></p>
+                        </div>
+                    </div>
+
+                    <div x-show="getHarinaRealUsada() > 0" 
+                         :class="getPorcentajeMerma() <= 3 ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-rose-50 border border-rose-200 text-rose-800'"
+                         class="p-4 rounded-xl flex items-center justify-between transition-all">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide" x-text="getPorcentajeMerma() <= 3 ? '🟢 Rango Permitido' : '🔴 Merma Excesiva'"></p>
+                            <p class="text-[11px] opacity-90 mt-0.5" x-text="getPorcentajeMerma() <= 3 ? 'Excelente control. Estás dentro del margen ideal (menor al 3%).' : 'Alerta. El desperdicio supera el 3% recomendado para el negocio.'"></p>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- TAB: TIEMPOS -->
         <section x-show="tab === 'tiempos'" x-cloak 
             x-data="{ 
-                batidas: 1, 
-                horaInicio: '',
+                form: { batidas: 1, horaInicio: '' },
+                init() {
+                    if (localStorage.getItem('r72_tiempos')) this.form = JSON.parse(localStorage.getItem('r72_tiempos'));
+                    this.$watch('form', value => localStorage.setItem('r72_tiempos', JSON.stringify(value)));
+                },
                 calcularFin() {
-                    if (!this.horaInicio || this.batidas <= 0) return '--:--';
-                    const minutesTotales = Math.round(this.batidas * 30);
-                    const [h, m] = this.horaInicio.split(':').map(Number);
-                    const fecha = new Date();
-                    fecha.setHours(h, m + minutesTotales);
-                    return fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                    if (!this.form.horaInicio || (Number(this.form.batidas)||0) <= 0) return '--:--';
+                    const minutesTotales = Math.round((Number(this.form.batidas)||0) * 30);
+                    const [h, m] = this.form.horaInicio.split(':').map(Number);
+                    
+                    let totalMins = m + minutesTotales;
+                    let finalH = (h + Math.floor(totalMins / 60)) % 24;
+                    let finalM = totalMins % 60;
+                    
+                    const ampm = finalH >= 12 ? 'PM' : 'AM';
+                    finalH = finalH % 12;
+                    finalH = finalH ? finalH : 12;
+                    const strMins = finalM < 10 ? '0' + finalM : finalM;
+                    
+                    return `${finalH}:${strMins} ${ampm}`;
                 },
                 formatearDuracion() {
-                    const mins = Math.round(this.batidas * 30);
+                    const mins = Math.round((Number(this.form.batidas)||0) * 30);
                     const h = Math.floor(mins / 60);
                     const m = mins % 60;
                     return h > 0 ? `${h}h ${m}m` : `${m} min`;
@@ -275,11 +415,11 @@
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Planificador de Tiempos</h2>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Batidas a realizar</label>
-                    <input type="number" step="0.1" x-model.number="batidas" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl font-semibold">
+                    <input type="number" min="0" step="0.1" x-model="form.batidas" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl font-semibold">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hora de inicio</label>
-                    <input type="time" x-model="horaInicio" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl">
+                    <input type="time" x-model="form.horaInicio" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl">
                 </div>
                 <div class="grid grid-cols-2 gap-4 pt-2">
                     <div class="bg-slate-100 p-4 rounded-xl text-center">
@@ -295,5 +435,29 @@
         </section>
 
     </main>
+
+    <!-- BANDEJA DE ACCIONES FLOTANTES (REPORTES Y RESET) -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-100 via-slate-50/95 to-transparent z-30">
+        <div class="max-w-md mx-auto grid grid-cols-3 gap-2">
+            <!-- Botón Copiar -->
+            <button @click="copiarReporte()" class="bg-white text-slate-700 hover:bg-slate-100 p-3 rounded-xl text-xs font-bold uppercase tracking-wide shadow-md border border-slate-200 flex flex-col items-center justify-center gap-1 transition-all">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                <span>Copiar</span>
+            </button>
+            
+            <!-- Botón WhatsApp -->
+            <button @click="compartirWhatsApp()" class="bg-emerald-600 text-white hover:bg-emerald-700 p-3 rounded-xl text-xs font-bold uppercase tracking-wide shadow-md flex flex-col items-center justify-center gap-1 transition-all">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.528 2.01 14.069.993 11.5.993c-5.44 0-9.863 4.374-9.867 9.802-.001 1.73.463 3.42 1.345 4.927l-.997 3.641 3.73-.966c1.517.823 3.09 1.258 4.337 1.258zm9.36-6.81c-.232-.115-1.371-.674-1.583-.749-.212-.075-.366-.112-.52.115-.154.228-.597.749-.732.904-.134.155-.27.174-.502.058-.232-.115-.98-.36-1.87-1.15-.693-.615-1.161-1.376-1.297-1.607-.136-.231-.015-.356.101-.471.104-.103.232-.27.348-.405.116-.134.155-.23.232-.385.077-.154.039-.289-.02-.405-.058-.115-.52-1.25-.713-1.711-.189-.453-.379-.39-.52-.397-.135-.006-.29-.007-.444-.007s-.404.058-.616.289c-.212.23-.809.789-.809 1.923s.828 2.232.943 2.386c.115.154 1.63 2.487 3.948 3.486.551.238.981.38 1.316.486.553.175 1.056.15 1.454.09.443-.066 1.371-.559 1.563-1.097.192-.539.192-1.001.135-1.097-.057-.096-.211-.154-.443-.27z"/></svg>
+                <span>WhatsApp</span>
+            </button>
+
+            <!-- Botón Reiniciar Turno -->
+            <button @click="resetTodo()" class="bg-slate-900 text-slate-100 hover:bg-red-600 hover:text-white p-3 rounded-xl text-xs font-bold uppercase tracking-wide shadow-md border border-slate-700 flex flex-col items-center justify-center gap-1 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>Reiniciar</span>
+            </button>
+        </div>
+    </div>
+
 </body>
 </html>
