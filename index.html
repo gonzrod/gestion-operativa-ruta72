@@ -52,7 +52,7 @@
             if(localStorage.getItem('r72_frio')) {
                 const fData = JSON.parse(localStorage.getItem('r72_frio'));
                 const nombres = ['PEPPERONI', 'PASTA TOMATE', 'QUESO PIZZA', 'QUESO TIRA', 'PIÑA', 'CHAMPIÑONES', 'GARRAFONES'];
-                const specs = [4, 12, 6, 0, 0, 0, 0]; 
+                const specs = [3, 12, 6, 0, 0, 0, 0]; 
                 const pesos = [5.67, 3, 2, 6.8, 3, 3, 18];
                 const unidades = ['Bolsas', 'Bolsas', 'Bolsas', 'Bolsas', 'Latas', 'Latas', 'L'];
 
@@ -88,7 +88,7 @@
         </div>
     </header>
 
-    <!-- NAVEGACIÓN MEJORADA VISUALMENTE -->
+    <!-- NAVEGACIÓN -->
     <nav class="bg-white border-b border-slate-200 sticky top-[61px] z-10 text-[11px] font-bold overflow-x-auto no-scrollbar shadow-sm">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <button @click="tab = 'masas'" :class="tab === 'masas' ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50/50' : 'text-slate-500 border-b-2 border-transparent'" class="py-4 px-3 flex-1 text-center transition-all uppercase whitespace-nowrap">Masas</button>
@@ -173,7 +173,7 @@
         <section x-show="tab === 'frio'" x-cloak 
             x-data="{ 
                 items: [
-                    { name: 'PEPPERONI', spec: '4 X 5.67KG', bagsPerJaba: 4, weightPerBag: 5.67, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
+                    { name: 'PEPPERONI', spec: '3 X 5.67KG', bagsPerJaba: 3, weightPerBag: 5.67, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
                     { name: 'PASTA TOMATE', spec: '12 X 3KG', bagsPerJaba: 12, weightPerBag: 3, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
                     { name: 'QUESO PARA PIZZA', spec: '6 X 2KG', bagsPerJaba: 6, weightPerBag: 2, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
                     { name: 'QUESO EN TIRA',  spec: '1 X 6.8KG', bagsPerJaba: 0, weightPerBag: 6.8, unitName: 'Bolsas', unitLabel: 'Bolsas Sueltas', totalLabel: 'Total Bolsas', weightLabel: 'Peso Estimado', unitSymbol: 'kg', jabas: '', bags: '' },
@@ -436,7 +436,7 @@
 
     </main>
 
-    <!-- BANDEJA DE ACCIONES FLOTANTES (REPORTES Y RESET) -->
+    <!-- BANDEJA DE ACCIONES FLOTANTES -->
     <div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-100 via-slate-50/95 to-transparent z-30">
         <div class="max-w-md mx-auto grid grid-cols-3 gap-2">
             <!-- Botón Copiar -->
